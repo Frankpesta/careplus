@@ -8,6 +8,7 @@ import {
 } from "../appwrite.config";
 import { Appointment } from "@/types/appWrite.types";
 import { parseStringify } from "../utils";
+import { revalidatePath } from "next/cache";
 
 export const createAppointment = async (
 	appointment: CreateAppointmentParams
@@ -46,6 +47,7 @@ export const getRecentAppointmentList = async () => {
 			APPOINTMENT_COLLECTON_ID!,
 			[Query.orderDesc("$createdAt")]
 		);
+
 		const initialCounts = {
 			scheduledCount: 0,
 			pendingCount: 0,
@@ -54,24 +56,58 @@ export const getRecentAppointmentList = async () => {
 
 		const counts = (appointments.documents as Appointment[]).reduce(
 			(acc, appointment) => {
-				if (appointment.status === "scheduled") {
-					acc.scheduledCount += 1;
-				} else if (appointment.status === "pending") {
-					acc.pendingCount += 1;
-				} else if (appointment.status === "cancelled") {
-					acc.cancelledCount = +1;
+				switch (appointment.status) {
+					case "scheduled":
+						acc.scheduledCount++;
+						break;
+					case "pending":
+						acc.pendingCount++;
+						break;
+					case "cancelled":
+						acc.cancelledCount++;
+						break;
 				}
-
 				return acc;
 			},
 			initialCounts
 		);
+
 		const data = {
 			totalCount: appointments.total,
 			...counts,
 			documents: appointments.documents,
 		};
+
 		return parseStringify(data);
+	} catch (error) {
+		console.error(
+			"An error occurred while retrieving the recent appointments:",
+			error
+		);
+	}
+};
+
+export const updateAppointment = async ({
+	appointmentId,
+	userId,
+	appointment,
+	type,
+}: UpdateAppointmentParams) => {
+	try {
+		const updatedAppointment = await databases.updateDocument(
+			DATABASE_ID!,
+			APPOINTMENT_COLLECTON_ID!,
+			appointmentId,
+			appointment
+		);
+		if (!updateAppointment) {
+			throw new Error("Appointment not found");
+		}
+
+		// TODO SMS Notification
+
+		revalidatePath("/admin");
+		return parseStringify(updatedAppointment);
 	} catch (error) {
 		console.log(error);
 	}
