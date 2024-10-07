@@ -44,8 +44,8 @@ export const getRecentAppointmentList = async () => {
 	try {
 		const appointments = await databases.listDocuments(
 			DATABASE_ID!,
-			APPOINTMENT_COLLECTON_ID!,
-			[Query.orderDesc("$createdAt")]
+			APPOINTMENT_COLLECTON_ID!
+			// [Query.orderDesc("$createdAt")]
 		);
 
 		const initialCounts = {
@@ -75,7 +75,7 @@ export const getRecentAppointmentList = async () => {
 		const data = {
 			totalCount: appointments.total,
 			...counts,
-			documents: appointments.documents,
+			documents: appointments?.documents,
 		};
 
 		return parseStringify(data);

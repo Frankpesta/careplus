@@ -58,7 +58,7 @@ export function DataTable<TData, TValue>({
 				</TableHeader>
 				<TableBody>
 					{table.getRowModel().rows?.length ? (
-						table.getRowModel().rows.map((row) => (
+						table?.getRowModel().rows.map((row) => (
 							<TableRow
 								className="shad-table-row"
 								key={row.id}
